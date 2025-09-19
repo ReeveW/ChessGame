@@ -8,7 +8,6 @@
 #include <array>
 #include <functional>
 #include <unordered_set>
-#include "Piece.h"
 #include <vector>
 #include <optional>
 

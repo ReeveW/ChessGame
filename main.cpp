@@ -9,9 +9,6 @@
 #include <iostream>
 
 #include "Game.h"
-#include "Piece.h"
-#include "Board.h"
-#include <unistd.h>
 
 int main() {
     Game game;

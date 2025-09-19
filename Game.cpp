@@ -269,7 +269,7 @@ void Game::loadSprites() {
     // array of the images i use as sprites
     int j = 0;
      for (int i = 0; i < texture.size(); ++i) { // loop that makes 1 texture of each file, and sprites equal to the amount of pieces we need on the starting chessboard.
-         std::string path = "/home/johnathan-porkonimus/CLionProjects/chessv1/images/" + file[i];
+         std::string path = "images/" + file[i];
          if (!texture[i].loadFromFile(path)) { // makes texture for each of the images, if missing will send a message
              std::cout << path << " is missing" << std::endl;
          }
