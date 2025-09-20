@@ -26,6 +26,7 @@ This is my chess program built in C++ using SFML for graphics.
 
 ## Screenshots:
 ![Gameplay Screenshot](images/default_board.png)
+![Gameplay Screenshot](images/action_shot.png)
 
 
 ## Future Plans
