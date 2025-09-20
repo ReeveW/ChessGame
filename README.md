@@ -24,7 +24,8 @@ This is my chess program built in C++ using SFML for graphics.
 4. Program will tell you in the terminal when a player has won
 5. It's all standard chess rules, with everything implemented (promotion, castling, en passant)
 
-
+## Screenshots:
+![Gameplay Screenshot](images/default_board.png)
 
 
 ## Future Plans
