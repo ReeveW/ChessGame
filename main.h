@@ -1,6 +1,4 @@
-//
-// Created by johnathan-porkonimus on 6/18/25.
-//
+
 
 #ifndef MAIN_H
 #define MAIN_H

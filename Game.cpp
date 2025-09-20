@@ -1,6 +1,4 @@
-//
-// Created by johnathan-porkonimus on 6/23/25.
-//
+
 
 #include "Game.h"
 #include "Board.h"
@@ -42,7 +40,7 @@ void Game::run() {
     }
 }
 
-void Game::handleDragAndDrop(sf::Event& event) {
+void Game::handleDragAndDrop(sf::Event& event) { // this function 100% needs updating. It's doing too many things. should be split up into multiple different functions
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         sf::Vector2f mousePos = window.mapPixelToCoords({ event.mouseButton.x, event.mouseButton.y });
         int col = static_cast<int>(mousePos.x) / 100;

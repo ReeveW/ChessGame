@@ -1,6 +1,3 @@
-//
-// Created by johnathan-porkonimus on 6/23/25.
-//
 
 #ifndef GAME_H
 #define GAME_H

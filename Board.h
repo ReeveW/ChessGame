@@ -1,6 +1,4 @@
-//
-// Created by johnathan-porkonimus on 6/23/25.
-//
+
 
 #ifndef BOARD_H
 #define BOARD_H
