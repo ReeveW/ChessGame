@@ -4,12 +4,8 @@
 #define MAIN_H
 
 #include <SFML/Graphics.hpp>
-#include <iostream>
 #include <array>
+#include <iostream>
 #include <string>
 
-
-
-
-
-#endif //MAIN_H
+#endif  // MAIN_H

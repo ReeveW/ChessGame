@@ -6,9 +6,9 @@
 #include "Game.h"
 
 int main() {
-    Game game;
-    game.loadSprites();
-    game.run();
+  Game game;
+  game.loadSprites();
+  game.run();
 
-    return 0;
+  return 0;
 }
