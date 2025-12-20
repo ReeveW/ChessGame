@@ -325,13 +325,15 @@ int Board::pseudoLegalKingMoves(
   return castleSides;
 }
 
+/*
+checks if king can castle, and checks if his pseudo legal moves are being
+attacked (remove from moveset if attacked)
+*/
 void Board::kingMoves(
     std::vector<moveType>&
         legalKingMoves) {  // king can take pieces that are defended, and if
                            // lasered can move to the square behind the laser
                            // still
-  // step 3: find all possible squares the king can move to, if it can castle
-  // then check the squares in between as well
   std::array<int, 64> legalSquares = {};
   int castleSides = pseudoLegalKingMoves(king, legalSquares, board);
   forEachSquare([&](int i) {
@@ -362,34 +364,12 @@ void Board::kingMoves(
       legalKingMoves.push_back(kingMove);
     }
   });
-
-  // print out stuff to test
-
-  // std::cout << "turn: " << turn << std::endl;
-  // std::cout << "king index: " << king.index << std::endl;
-  // std::cout << "is in check: " << inCheck << std::endl;
-  // std::cout << "castle sides: " << castleSides << std::endl;
-
-  // std::cout << "squares being attacked: " << std::endl;
-  // for (int i = 0; i < 64; ++i) {
-  //     if (i % 8 == 0 && i != 0) {
-  //         std::cout << std::endl;
-  //     }
-  //     std::cout << squaresBeingAttacked[i] << " ";
-  // }
-  // std::cout << std::endl;
-  // //
-  // std::cout << "legalSquares: " << std::endl;
-  // for (int i = 0; i < 64; ++i) {
-  //     if (i % 8 == 0 && i != 0) {
-  //         std::cout << std::endl;
-  //     }
-  //     std::cout << legalSquares[i] << " ";
-  // }
-  //
-  // std::cout << std::endl << std::endl;
 }
 
+/*
+resets squaresBeingAttacked, then simulates all moves by enemy pieces using the
+chessBoard passed, using attacks() to insert the moves into squaresBeingAttacked
+*/
 void Board::findAttackedSquares(const std::array<int, 64>& chessBoard,
                                 std::vector<moveType>& attackingMoves,
                                 int colour, int oppositeColour) {
@@ -399,45 +379,11 @@ void Board::findAttackedSquares(const std::array<int, 64>& chessBoard,
       attacks(chessBoard, attackingMoves, oppositeColour, i);
     }
   });
-
-  // if (chessBoard[i] == 1 + oppositeColour) {
-  //     int row = 8;
-  //     if (colour) {
-  //         row = -8;
-  //     }
-  //     if (i % 8 != 0) {
-  //         squaresBeingAttacked[i - 1 + row] = 1;
-  //     }
-  //     if (i % 8 != 7) {
-  //         squaresBeingAttacked[i + 1 + row] = 1;
-  //     }
-  // }else if (chessBoard[i] == 6 + oppositeColour) {
-  //     pieceData enemyKing {};
-  //     enemyKing.isBlack = chessBoard[i] / 8;
-  //     enemyKing.type = 6;
-  //     enemyKing.index = i;
-  //     std::array<int, 64> kingArray = {};
-  //     pseudoLegalKingMoves(enemyKing, kingArray, chessBoard);
-  //     forEachSquare([&] (int j) {
-  //         if (kingArray[j]) {
-  //             squaresBeingAttacked[j] = 1;
-  //             moveType kingAttack {i, j, 1};
-  //             attackingMoves.push_back(kingAttack);
-  //         }
-  //     });
-  // }
-  // else if (chessBoard[i] != 6 + oppositeColour){ // was recursively calling
-  // this function on each player's kings, leading to an infinite loop. need to
-  // call pseudo legal king moves instead
-  //     newSquares = legalMoves(i, chessBoard[i], chessBoard);
-  //     for (auto square : newSquares) {
-  //         squaresBeingAttacked[square.to] = 1;
-  //         attackingMoves.push_back(square);
-  //     }
-  //     newSquares.clear();
-  // }
 }
 
+/*
+checks if king is currently under attack using squaresBeingAttacked
+*/
 bool Board::isInCheck() {  // this function is being called after all the moves
                            // have been generated i think?
   if (squaresBeingAttacked[king.index]) {
@@ -525,6 +471,10 @@ void Board::attacks(const std::array<int, 64>& chessBoard,
   }
 }
 
+/*
+adds a pawn's attacks to squaresBeingAttacked. Remember pawn attacks and moves
+are different.
+*/
 void Board::pawnAttacks(std::vector<moveType>& attackingMoves, int colour,
                         int index) {
   int row = -8;
@@ -542,6 +492,10 @@ void Board::pawnAttacks(std::vector<moveType>& attackingMoves, int colour,
     attackingMoves.push_back(pawnAttack);
   }
 }
+
+/*
+adds a knight's attacks to squaresBeingAttacked.
+*/
 void Board::knightAttacks(std::vector<moveType>& attackingMoves, int index) {
   for (Point kd : knightDirections) {
     int row = index / 8 + kd.Y;
@@ -557,6 +511,10 @@ void Board::knightAttacks(std::vector<moveType>& attackingMoves, int index) {
   }
 }
 
+/*
+adds a bishop's attacks to squaresBeingAttacked. uses sliders array for diagonal
+movement.
+*/
 void Board::bishopAttacks(const std::array<int, 64>& chessBoard,
                           std::vector<moveType>& attackingMoves, int index) {
   std::array directions = {1, 3, 5, 7};
@@ -588,6 +546,10 @@ void Board::bishopAttacks(const std::array<int, 64>& chessBoard,
   }
 }
 
+/*
+adds a rook's attacks to squaresBeingAttacked. uses sliders array for horizontal
+and vertical movement.
+*/
 void Board::rookAttacks(const std::array<int, 64>& chessBoard,
                         std::vector<moveType>& attackingMoves, int index) {
   std::array directions = {0, 2, 4, 6};
@@ -619,6 +581,10 @@ void Board::rookAttacks(const std::array<int, 64>& chessBoard,
   }
 }
 
+/*
+adds a queen's attacks to squaresBeingAttacked. uses sliders array for
+horizontal, vertical and diagonal movement.
+*/
 void Board::queenAttacks(const std::array<int, 64>& chessBoard,
                          std::vector<moveType>& attackingMoves, int index) {
   std::array directions = {0, 1, 2, 3, 4, 5, 6, 7};
@@ -650,6 +616,10 @@ void Board::queenAttacks(const std::array<int, 64>& chessBoard,
   }
 }
 
+/*
+king attacks are calculated differently than king moves. This is because we're
+calculating for the opponent's turn here, so we don't care if it's legal or not.
+*/
 void Board::kingAttacks(std::vector<moveType>& attackingMoves, int index) {
   for (auto move : sliders) {
     int row = index / 8 + move.Y;

@@ -54,8 +54,6 @@ class Board {
   std::unordered_set<int> blockingSquares;
   std::array<int, 64> squaresBeingAttacked = {};
 
-  // helper functions
-
   inline void forEachSquare(
       const std::function<void(int)>&
           action) {  // used a lot to loop through each square in the board
@@ -98,7 +96,6 @@ class Board {
                            std::optional<moveType>& checkingMove);
   void restrictMoves(std::optional<moveType> checkingMove);
 
-  // attacks, these functions are different from the moves functions cause
   void attacks(const std::array<int, 64>& chessBoard,
                std::vector<moveType>& attackingMoves, int colour, int index);
   void pawnAttacks(std::vector<moveType>& attackingMoves, int colour,
