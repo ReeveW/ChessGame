@@ -415,7 +415,6 @@ void Board::restrictMoves(
         checkingMove) {  // blocking checks doesn't work properly anymore
   int checkerIndex = checkingMove->from;
   int id = board[checkerIndex] / 8;
-  std::cout << "rm has been called" << std::endl;
   blockingSquares.insert(
       checkerIndex);  // attacker can always just be taken by a piece
   if (id == 1 || id == 3) {
@@ -454,7 +453,6 @@ void Board::restrictMoves(
     row += rowDirection;
     col += colDirection;
   }
-  std::cout << "bs: " << blockingSquares.size();
 }
 
 void Board::attacks(const std::array<int, 64>& chessBoard,
@@ -854,7 +852,6 @@ void Board::updateBoard(int prevIndex, int newIndex) {
   board[prevIndex] = 0;
   board[newIndex] = temp;
   lastPieceMoved = board[newIndex];
-  // std::cout << temp << " " << prevIndex << std::endl;
 }
 
 void Board::canCastle() {
@@ -889,14 +886,11 @@ void Board::findCheckingMoves() {
 
   inCheck = isInCheck();  // pass moveType of attacker, and multipleAttackers
   if (inCheck) {
-    std::cout << "yes" << std::endl;
     std::optional<moveType> checkingMove;
     findAttackersOnKing(attackingMoves, multipleAttackers, checkingMove);
     if (multipleAttackers) {
-      std::cout << "mult" << std::endl;
       onlyKingToMove = true;
     } else {
-      std::cout << "single" << std::endl;
       restrictMoves(checkingMove);
     }
   }
@@ -919,17 +913,12 @@ check. Should only be called when king is in check.
 */
 void Board::deleteNonBlockingMoves(std::vector<moveType>& moves) {
   auto tempMoves = moves;
-  std::cout << blockingSquares.size() << std::endl;
-  std::cout << tempMoves.size() << " " << moves.size() << std::endl;
   moves.clear();
-  std::cout << tempMoves.size() << " " << moves.size() << std::endl;
   for (const auto& move : tempMoves) {
     if (blockingSquares.find(move.to) != blockingSquares.end()) {
       moves.push_back(move);
     }
   }
-  std::cout << tempMoves.size() << " " << moves.size() << std::endl
-            << std::endl;
 }
 
 void Board::printBoard() {
