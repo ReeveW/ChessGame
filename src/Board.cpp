@@ -407,11 +407,15 @@ void Board::findAttackersOnKing(const std::vector<moveType>& attackingMoves,
   }
 }
 
+/*
+pretty sure there's a bug here?
+*/
 void Board::restrictMoves(
     std::optional<moveType>
         checkingMove) {  // blocking checks doesn't work properly anymore
   int checkerIndex = checkingMove->from;
   int id = board[checkerIndex] / 8;
+  std::cout << "rm has been called" << std::endl;
   blockingSquares.insert(
       checkerIndex);  // attacker can always just be taken by a piece
   if (id == 1 || id == 3) {
@@ -450,6 +454,7 @@ void Board::restrictMoves(
     row += rowDirection;
     col += colDirection;
   }
+  std::cout << "bs: " << blockingSquares.size();
 }
 
 void Board::attacks(const std::array<int, 64>& chessBoard,
@@ -720,11 +725,18 @@ std::vector<moveType> Board::legalMoves(int index, int id,
   return moves;
 }
 
+/*
+I don't like this function, but it's a temporary solution before I revamp this
+entire file
+*/
+void Board::resetArrays() {
+  allLegalMoves.clear();
+  blockingSquares.clear();
+}
+
 void Board::generateAllMoves() {
   bool turn = getTurn();
 
-  allLegalMoves.clear();
-  blockingSquares.clear();
   for (int piece : piecesOf(turn)) {
     pieceMoves currentPiece;
     currentPiece.index = piece;
@@ -860,6 +872,10 @@ void Board::canCastle() {
 // each players turn.
 void Board::resetEnPassant() { enPassantFile = -1; }
 
+/*
+finds whether king is in check, and if by multiple attackers, then delegates the
+restriction of moves accordingly
+*/
 void Board::findCheckingMoves() {
   bool turn = getTurn();
   int colour = !turn * 8;  // 8 when black, 0 when white
@@ -873,11 +889,14 @@ void Board::findCheckingMoves() {
 
   inCheck = isInCheck();  // pass moveType of attacker, and multipleAttackers
   if (inCheck) {
+    std::cout << "yes" << std::endl;
     std::optional<moveType> checkingMove;
     findAttackersOnKing(attackingMoves, multipleAttackers, checkingMove);
     if (multipleAttackers) {
+      std::cout << "mult" << std::endl;
       onlyKingToMove = true;
     } else {
+      std::cout << "single" << std::endl;
       restrictMoves(checkingMove);
     }
   }
@@ -894,14 +913,23 @@ void Board::findKing() {
   });
 }
 
+/*
+When given a vector of moves, deletes all moves that aren't currently blocking a
+check. Should only be called when king is in check.
+*/
 void Board::deleteNonBlockingMoves(std::vector<moveType>& moves) {
   auto tempMoves = moves;
+  std::cout << blockingSquares.size() << std::endl;
+  std::cout << tempMoves.size() << " " << moves.size() << std::endl;
   moves.clear();
+  std::cout << tempMoves.size() << " " << moves.size() << std::endl;
   for (const auto& move : tempMoves) {
     if (blockingSquares.find(move.to) != blockingSquares.end()) {
       moves.push_back(move);
     }
   }
+  std::cout << tempMoves.size() << " " << moves.size() << std::endl
+            << std::endl;
 }
 
 void Board::printBoard() {

@@ -329,6 +329,7 @@ void Game::loadSprites() {
 void Game::deleteSprites() {}
 
 void Game::nextTurn() {
+  board.resetArrays();
   board.canCastle();
 
   turn = !turn;

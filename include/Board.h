@@ -116,6 +116,7 @@ class Board {
   int getPiece(int index) const;
   std::vector<moveType> legalMoves(int index, int id,
                                    std::array<int, 64> currentBoard);
+  void resetArrays();
   void generateAllMoves();
   std::vector<moveType> checkMove(int index);
   void findPinsToKing(int turn);
