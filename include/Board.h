@@ -38,11 +38,6 @@ class Board {
   std::array<bool, 4>
       castleRights;  // index 0 is black queenside, 1 is black kingside, 2 is
                      // white queenside, 3 is white kingside
-  std::array<bool, 16>
-      enPassantSquares;  // array corresponding to the squares that are en
-                         // passant-able. the square behind the pawn being taken
-                         // is the one that is switched to true, as this matches
-                         // FEN notation.
   // bool turn; // white's turn if false, black's if true
   int enPassantFile = -1;
   int lastPieceMoved = 0;

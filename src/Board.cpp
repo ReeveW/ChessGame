@@ -54,6 +54,14 @@ std::array<Point, 8> knightDirections = {
      */
 };
 
+// this fills the board with pieces in their default starting positions
+namespace {
+constexpr std::array<int, 64> defaultBoard = {
+    10, 11, 12, 13, 14, 12, 11, 10, 9, 9, 9, 9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0,
+    0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0,  0,  0,  0,  1,  1,  1,  1,  1, 1, 1, 1, 2, 3, 4, 5, 6, 4, 3, 2};
+}
+
 // std::array<Point, 4> pawnDirections = {
 //     Point{0, 1},
 //     {0, 2},
@@ -638,44 +646,18 @@ void Board::kingAttacks(std::vector<moveType>& attackingMoves, int index) {
   }
 }
 
-Board::Board() : board(), castleRights(), enPassantSquares() {
-  // combine this into one big for loop from 0-63
-  for (int i = 16; i < 48; ++i) {
-    board[i] = 0;
-  }
-  for (int i = 0; i < 8; ++i) {  // sets board value for white pawns
-    board[i + 48] = 1;
-  }
-  for (int i = 0; i <= 4;
-       ++i) {  // sets board value for white queenside rook through king
-    board[i + 56] = i + 2;
-  }
-  for (int i = 5; i < 8;
-       ++i) {  // sets board value for white kingside bishop through rook
-    board[i + 56] = (9 - i);
-  }
-
-  for (int i = 0; i < 8; ++i) {  // sets board value for black pawns
-    board[i + 8] = 9;
-  }
-  for (int i = 0; i <= 4;
-       ++i) {  // sets board value for black queenside rook through king
-    board[i] = i + 10;
-  }
-  for (int i = 5; i < 8;
-       ++i) {  // sets board value for black bishop through rook
-    board[i] = (17 - i);
-  }
-
-  for (bool& enPassantSquare : enPassantSquares) {
-    enPassantSquare = false;
-  }
-
-  for (bool& castleRight : castleRights) {
-    castleRight = true;
-  }
+/*
+default constructor, initializes board to the default starting position, and
+sets all possible castling options to true.
+*/
+Board::Board() : board(defaultBoard), castleRights() {
+  castleRights.fill(true);
 }
 
+/*
+used when a piece is being taken by en passant. index is the index of the piece
+being taken.
+*/
 void Board::takePiece(int index) { board[index] = 0; }
 
 void Board::promotePawn(int index, int newId, int prevIndex) {
@@ -692,10 +674,7 @@ std::vector<moveType> Board::legalMoves(int index, int id,
       moves;  // vector where 0 is squares the piece cant move, 1 is legal
               // moves, 2 is legal moves where it takes a piece, 3 is for
               // castling, 4 for en passant, 5 for promotion squares
-  pieceData p{};
-  p.isBlack = id / 8;
-  p.type = id % 8;
-  p.index = index;
+  pieceData p{id / 8, id % 8, index};
 
   if (p.type == 5 || p.type == 2 ||
       p.type ==

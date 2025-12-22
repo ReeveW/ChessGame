@@ -238,8 +238,10 @@ void Game::castling(int row, int col) {
 }
 
 void Game::takingEnPassant(int row, int col) {
-  ;
-  int ROW_BEHIND_PIECE = (pieceId / 8) ? -1 : 1;
+  int ROW_BEHIND_PIECE = 1;
+  if(pieceId / 8){
+    ROW_BEHIND_PIECE = -1;
+  }
   for (int i = 1; i < sprite.size(); ++i) {
     if (sprite[i].getGlobalBounds().contains(
             col * 100.f, (row + ROW_BEHIND_PIECE) * 100.f) &&
