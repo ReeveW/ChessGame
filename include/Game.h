@@ -7,6 +7,7 @@
 #include <array>
 
 #include "Board.h"
+#include "ChessTypes.h"
 
 class Game {
  private:
@@ -17,8 +18,8 @@ class Game {
   sf::Vector2f offset;  // difference between mouse and sprite origin
   bool isDragging = false;
   Board board;
-  std::vector<moveType> validMoves;
-  bool turn = false;  // false if white black if true
+  std::vector<MoveType> validMoves;
+  Colour _turn = Colour::White;
   int prevIndex;
   int pieceId;
 
@@ -41,7 +42,7 @@ class Game {
   void checkPawnMove(int prevIndex, int newIndex);
   void handleDragAndDrop(sf::Event& Event);
   void updateDragPosition();
-  void lightValidSquares(std::vector<moveType>& moves);
+  void lightValidSquares(std::vector<MoveType>& moves);
   void takePiece(int row, int col);
   void castling(int row, int col);
   void takingEnPassant(int row, int col);

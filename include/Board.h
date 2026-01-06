@@ -8,24 +8,17 @@
 #include <optional>
 #include <unordered_set>
 #include <vector>
+#include "ChessTypes.h"
 
 struct Point {  // struct to store coordinates on the board array
   int X, Y;  // all Y values get multiplied by 8 when converted to board indices
 };
-struct pieceData {
-  bool isBlack;  // 0 is white, 1 is black
-  int type;
-  int index;
-};
-struct moveType {
-  int from;
-  int to;
-  int typeOfMove;
-};
-struct pieceMoves {
-  int index;
-  std::vector<moveType> moves;
-};
+// struct pieceData {
+//   bool isBlack;  // 0 is white, 1 is black
+//   int type;
+//   int index;
+// };
+
 struct pinInfo {
   int pinIndex;
   std::unordered_set<int> pathToKing;  // vector of indices which track the path
@@ -34,17 +27,17 @@ struct pinInfo {
 
 class Board {
  private:
-  std::array<int, 64> board;
+  std::array<PieceData, 64> _board;
   std::array<bool, 4>
       castleRights;  // index 0 is black queenside, 1 is black kingside, 2 is
                      // white queenside, 3 is white kingside
   // bool turn; // white's turn if false, black's if true
   int enPassantFile = -1;
-  int lastPieceMoved = 0;
+  PieceData lastPieceMoved = E;
   bool onlyKingToMove = false;
   bool inCheck = false;
-  pieceData king{false, 6, 60};
-  std::vector<pieceMoves> allLegalMoves;
+  PieceData king{Piece::King, Colour::White};
+  std::vector<PieceMoves> allLegalMoves;
   std::vector<pinInfo> pins;
   std::unordered_set<int> blockingSquares;
   std::array<int, 64> squaresBeingAttacked = {};
@@ -56,67 +49,66 @@ class Board {
       action(i);
     }
   }
-  std::vector<int> piecesOf(int turn);
+  std::vector<int> piecesOf(Colour turn);
   bool getTurn();
   bool onSameLine(int from, int to, int direction);
   void newPin(int pinnedPiece, int kingIndex, int attackerIndex, int direction);
 
   // other private functions:
-  void slidingMoves(pieceData p, std::vector<moveType>& moves,
-                    const std::array<int, 64>& currentBoard);
-  void knightMoves(pieceData p, std::vector<moveType>& moves,
-                   const std::array<int, 64>& currentBoard);
-  void pawnMoves(pieceData p, std::vector<moveType>& moves,
-                 const std::array<int, 64>& currentBoard);
+  std::vector<MoveType>& slidingMoves(PieceData p, int index,
+                    const std::array<PieceData, 64>& currentBoard);
+  std::vector<MoveType>& knightMoves(PieceData p, int index,
+                   const std::array<PieceData, 64>& currentBoard);
+  std::vector<MoveType>& pawnMoves(PieceData p, int index,
+                 const std::array<PieceData, 64>& currentBoard);
   bool enPassantLegalityCheck(
-      pieceData p, std::vector<moveType>& moves,
+      PieceData p, std::vector<MoveType>& moves,
       int newIndex);  // handles the special case where taking an en passant
                       // would be an illegal move, due to a rook/queen lasering
                       // through the two pawns to the king
   int pseudoLegalKingMoves(
-      pieceData p, std::array<int, 64>& moves,
-      const std::array<int, 64>&
+      PieceData p, std::array<PieceData, 64>& moves,
+      const std::array<PieceData, 64>&
           currentBoard);  // outputs the 8 moves around king, and castling moves
                           // if legal. doesn't check if move is legal.
-  void kingMoves(std::vector<moveType>&
+  std::vector<MoveType>& kingMoves(std::vector<MoveType>&
                      legalKingMoves);  // checks if each king move would put the
                                        // king in check (and castle stuff), if
                                        // so then its filtered out
-  void findAttackedSquares(const std::array<int, 64>& chessBoard,
-                           std::vector<moveType>& attackingMoves, int colour,
-                           int oppositeColour);
+  void findAttackedSquares(const std::array<PieceData, 64>& chessBoard,
+                           std::vector<MoveType>& attackingMoves, Colour colour);
   bool isInCheck();
-  void findAttackersOnKing(const std::vector<moveType>& attackingMoves,
+  void findAttackersOnKing(const std::vector<MoveType>& attackingMoves,
                            bool& multipleAttackers,
-                           std::optional<moveType>& checkingMove);
-  void restrictMoves(std::optional<moveType> checkingMove);
+                           std::optional<MoveType>& checkingMove);
+  void restrictMoves(std::optional<MoveType> checkingMove);
 
-  void attacks(const std::array<int, 64>& chessBoard,
-               std::vector<moveType>& attackingMoves, int colour, int index);
-  void pawnAttacks(std::vector<moveType>& attackingMoves, int colour,
+  void attacks(const std::array<PieceData, 64>& chessBoard,
+               std::vector<MoveType>& attackingMoves, int colour, int index);
+  void pawnAttacks(std::vector<MoveType>& attackingMoves, int colour,
                    int index);
-  void knightAttacks(std::vector<moveType>& attackingMoves, int index);
+  void knightAttacks(std::vector<MoveType>& attackingMoves, int index);
   void bishopAttacks(const std::array<int, 64>& chessBoard,
-                     std::vector<moveType>& attackingMoves, int index);
+                     std::vector<MoveType>& attackingMoves, int index);
   void rookAttacks(const std::array<int, 64>& chessBoard,
-                   std::vector<moveType>& attackingMoves, int index);
+                   std::vector<MoveType>& attackingMoves, int index);
   void queenAttacks(const std::array<int, 64>& chessBoard,
-                    std::vector<moveType>& attackingMoves, int index);
-  void kingAttacks(std::vector<moveType>& attackingMoves, int index);
+                    std::vector<MoveType>& attackingMoves, int index);
+  void kingAttacks(std::vector<MoveType>& attackingMoves, int index);
 
  public:
   Board();  // constructor which sets the board to starting position
   void takePiece(int index);  // used only for en passant moves
-  void promotePawn(int index, int newId, int prevIndex);
-  int getPiece(int index) const;
-  std::vector<moveType> legalMoves(int index, int id,
-                                   std::array<int, 64> currentBoard);
+  void promotePawn(int prevIndex, int newIndex, PieceData piece);
+  PieceData getPiece(int index) const;
+  std::vector<MoveType> legalMoves(int index, PieceData piece,
+                                   std::array<PieceData, 64> currentBoard);
   void resetArrays();
-  void generateAllMoves();
-  std::vector<moveType> checkMove(int index);
-  void findPinsToKing(int turn);
-  void isPinned(pieceData p, std::vector<moveType>& moves);
-  int canTake(int index, bool colour, const std::array<int, 64>& currentBoard)
+  void generateAllMoves(Colour turn);
+  std::vector<MoveType> checkMove(int index);
+  void findPinsToKing(Colour turn);
+  void isPinned(int index, PieceData p, std::vector<MoveType>& moves);
+  int canTake(int index, Colour colour, const std::array<PieceData, 64>& currentBoard)
       const;  // index is for the piece we want to know if we can take, colour
               // is of the piece which is moving
   void setEnPassantFile(int column);
@@ -124,7 +116,7 @@ class Board {
   void canCastle();
   void resetEnPassant();
   void findCheckingMoves();
-  void deleteNonBlockingMoves(std::vector<moveType>& moves);
+  void deleteNonBlockingMoves(std::vector<MoveType>& moves);
   void findKing();
 
   // debugging functions:

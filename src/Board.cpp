@@ -54,14 +54,6 @@ std::array<Point, 8> knightDirections = {
      */
 };
 
-// this fills the board with pieces in their default starting positions
-namespace {
-constexpr std::array<int, 64> defaultBoard = {
-    10, 11, 12, 13, 14, 12, 11, 10, 9, 9, 9, 9, 9, 9, 9, 9, 0, 0, 0, 0, 0, 0,
-    0,  0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0,  0,  0,  0,  1,  1,  1,  1,  1, 1, 1, 1, 2, 3, 4, 5, 6, 4, 3, 2};
-}
-
 // std::array<Point, 4> pawnDirections = {
 //     Point{0, 1},
 //     {0, 2},
@@ -87,10 +79,13 @@ constexpr std::array<int, 64> defaultBoard = {
 //      */
 // };
 
-std::vector<int> Board::piecesOf(int turn) {
+/*
+looks for pieces of the opposite colour and returns a list of their indices
+*/
+std::vector<int> Board::piecesOf(Colour turn) {
   std::vector<int> pieceLocations;
   forEachSquare([&](int i) {
-    if (board[i] / 8 == !turn && board[i] != 0) {
+    if (_board[i].colour != turn && _board[i].colour != Colour::Empty) {
       pieceLocations.push_back(i);
     }
   });
@@ -140,15 +135,16 @@ void Board::newPin(int pinnedPiece, int kingIndex, int attackerIndex,
   pins.push_back(pin);
 }
 
-void Board::slidingMoves(pieceData p, std::vector<moveType>& moves,
-                         const std::array<int, 64>& currentBoard) {
+// don't need to revamp this as it's covered by slidemoves
+void Board::slidingMoves(PieceData p, std::vector<MoveType>& moves,
+                         const std::array<PieceData, 64>& currentBoard) {
   std::vector<int> directions;
 
-  if (p.type == 2) {
+  if (p.piece == Piece::Rook) {
     directions = {0, 2, 4, 6};  // rook directions
-  } else if (p.type == 4) {
+  } else if (p.piece == Piece::Bishop) {
     directions = {1, 3, 5, 7};  // bishop directions
-  } else if (p.type == 5) {
+  } else if (p.piece == Piece::Queen) {
     directions = {0, 1, 2, 3, 4, 5, 6, 7};  // queen directions
   }
 
@@ -167,40 +163,40 @@ void Board::slidingMoves(pieceData p, std::vector<moveType>& moves,
 
       if (currentBoard[i]) {
         if (canTake(i, p.isBlack, currentBoard)) {
-          moveType take{p.index, i, 2};
+          MoveType take{p.index, i, 2};
           moves.push_back(take);
         }
         break;
       }
-      moveType slide{p.index, i, 1};
+      MoveType slide{p.index, i, 1};
       moves.push_back(slide);
     }
   }
 }
 
-void Board::knightMoves(pieceData p, std::vector<moveType>& moves,
-                        const std::array<int, 64>& currentBoard) {
+std::vector<MoveType>& Board::knightMoves(
+    PieceData p, int index, const std::array<PieceData, 64>& currentBoard) {
   for (auto nm : knightDirections) {
-    int x = (p.index % 8) + nm.X;
-    int y = (p.index / 8) + nm.Y;
+    int x = (index % 8) + nm.X;
+    int y = (index / 8) + nm.Y;
     if (x < 0 || x > 7 || y < 0 || y > 7) {
       continue;
     }
 
     int i = x + (8 * y);
 
-    if (currentBoard[i] && canTake(i, p.isBlack, currentBoard)) {
-      moveType take{p.index, i, 2};
+    if (currentBoard[i] && canTake(i, p.colour, currentBoard)) {
+      MoveType take{index, i, 2};
       moves.push_back(take);
     } else if (!currentBoard[i]) {
-      moveType horse{p.index, i, 1};
+      MoveType horse{p.index, i, 1};
       moves.push_back(horse);
     }
   }
 }
 
-void Board::pawnMoves(pieceData p, std::vector<moveType>& moves,
-                      const std::array<int, 64>& currentBoard) {
+void Board::pawnMoves(PieceData p, std::vector<MoveType>& moves,
+                      const std::array<PieceData, 64>& currentBoard) {
   const int ADD_ROW = p.isBlack ? 8 : -8;
   int row = p.index / 8;
   int col = p.index % 8;
@@ -210,7 +206,7 @@ void Board::pawnMoves(pieceData p, std::vector<moveType>& moves,
   int forwardTwo = p.index + 2 * ADD_ROW;
 
   if (!currentBoard[forwardOne]) {
-    moveType f1{};
+    MoveType f1{};
     f1.from = p.index;
     f1.to = forwardOne;
     if (p.isBlack && row == 6 || !p.isBlack && row == 1) {
@@ -222,7 +218,7 @@ void Board::pawnMoves(pieceData p, std::vector<moveType>& moves,
     // Double move from starting position
     if ((p.isBlack && row == 1) || (!p.isBlack && row == 6)) {
       if (!currentBoard[forwardTwo]) {
-        moveType f2{p.index, forwardTwo, 1};
+        MoveType f2{p.index, forwardTwo, 1};
         moves.push_back(f2);
       }
     }
@@ -236,7 +232,7 @@ void Board::pawnMoves(pieceData p, std::vector<moveType>& moves,
       if (captureIndex >= 0 && captureIndex < 64) {
         if (currentBoard[captureIndex] &&
             canTake(captureIndex, p.isBlack, currentBoard)) {
-          moveType capture{};
+          MoveType capture{};
           capture.from = p.index;
           capture.to = captureIndex;
           if (!p.isBlack && row == 1 || p.isBlack && row == 6) {
@@ -249,7 +245,7 @@ void Board::pawnMoves(pieceData p, std::vector<moveType>& moves,
         // En passant capture
         if (enPassantFile == newCol && row == 3 + p.isBlack) {
           if (enPassantLegalityCheck(p, moves, captureIndex)) {
-            moveType enPassant{p.index, captureIndex, 4};
+            MoveType enPassant{p.index, captureIndex, 4};
             moves.push_back(enPassant);
           }
         }
@@ -258,7 +254,7 @@ void Board::pawnMoves(pieceData p, std::vector<moveType>& moves,
   }
 }
 
-bool Board::enPassantLegalityCheck(pieceData p, std::vector<moveType>& moves,
+bool Board::enPassantLegalityCheck(PieceData p, std::vector<MoveType>& moves,
                                    int newIndex) {
   int directionToTakenPawn = 8;
   if (p.isBlack) {
@@ -266,13 +262,13 @@ bool Board::enPassantLegalityCheck(pieceData p, std::vector<moveType>& moves,
   }
 
   // simulating the en passant capture
-  auto newBoard = board;
+  auto newBoard = _board;
   newBoard[newIndex] = 1 + p.isBlack * 8;
   newBoard[p.index] = 0;
   newBoard[newIndex + directionToTakenPawn] = 0;
 
-  std::vector<moveType> newSquares;
-  std::vector<moveType> attackingMoves;
+  std::vector<MoveType> newSquares;
+  std::vector<MoveType> attackingMoves;
 
   findAttackedSquares(newBoard, attackingMoves, p.isBlack * 8, !p.isBlack * 8);
 
@@ -284,8 +280,8 @@ bool Board::enPassantLegalityCheck(pieceData p, std::vector<moveType>& moves,
 }
 
 int Board::pseudoLegalKingMoves(
-    pieceData p, std::array<int, 64>& moves,
-    const std::array<int, 64>&
+    PieceData p, std::array<PieceData, 64>& moves,
+    const std::array<PieceData, 64>&
         currentBoard) {  // ignore moves that would put king in check for now
   int castleSides = 0;
   for (auto km : sliders) {
@@ -337,13 +333,9 @@ int Board::pseudoLegalKingMoves(
 checks if king can castle, and checks if his pseudo legal moves are being
 attacked (remove from moveset if attacked)
 */
-void Board::kingMoves(
-    std::vector<moveType>&
-        legalKingMoves) {  // king can take pieces that are defended, and if
-                           // lasered can move to the square behind the laser
-                           // still
+std::vector<MoveType>& Board::kingMoves(std::vector<MoveType>& legalKingMoves) {
   std::array<int, 64> legalSquares = {};
-  int castleSides = pseudoLegalKingMoves(king, legalSquares, board);
+  int castleSides = pseudoLegalKingMoves(king, legalSquares, _board);
   forEachSquare([&](int i) {
     if (legalSquares[i] && squaresBeingAttacked[i]) {
       legalSquares[i] = 0;
@@ -368,7 +360,7 @@ void Board::kingMoves(
 
   forEachSquare([&](int i) {
     if (legalSquares[i]) {
-      moveType kingMove{king.index, i, legalSquares[i]};
+      MoveType kingMove{king.index, i, legalSquares[i]};
       legalKingMoves.push_back(kingMove);
     }
   });
@@ -378,13 +370,13 @@ void Board::kingMoves(
 resets squaresBeingAttacked, then simulates all moves by enemy pieces using the
 chessBoard passed, using attacks() to insert the moves into squaresBeingAttacked
 */
-void Board::findAttackedSquares(const std::array<int, 64>& chessBoard,
-                                std::vector<moveType>& attackingMoves,
-                                int colour, int oppositeColour) {
+void Board::findAttackedSquares(const std::array<PieceData, 64>& chessBoard,
+                                std::vector<MoveType>& attackingMoves,
+                                Colour colour) {
   squaresBeingAttacked = {};
   forEachSquare([&](int i) {
-    if ((chessBoard[i] / 8) != colour) {
-      attacks(chessBoard, attackingMoves, oppositeColour, i);
+    if (chessBoard[i].colour != colour) {
+      attacks(chessBoard, attackingMoves, i);
     }
   });
 }
@@ -400,11 +392,11 @@ bool Board::isInCheck() {  // this function is being called after all the moves
   return false;
 }
 
-void Board::findAttackersOnKing(const std::vector<moveType>& attackingMoves,
+void Board::findAttackersOnKing(const std::vector<MoveType>& attackingMoves,
                                 bool& multipleAttackers,
-                                std::optional<moveType>& checkingMove) {
+                                std::optional<MoveType>& checkingMove) {
   multipleAttackers = false;
-  for (moveType move : attackingMoves) {
+  for (MoveType move : attackingMoves) {
     if (move.to == king.index) {
       if (checkingMove) {
         multipleAttackers = true;
@@ -419,13 +411,13 @@ void Board::findAttackersOnKing(const std::vector<moveType>& attackingMoves,
 pretty sure there's a bug here?
 */
 void Board::restrictMoves(
-    std::optional<moveType>
+    std::optional<MoveType>
         checkingMove) {  // blocking checks doesn't work properly anymore
   int checkerIndex = checkingMove->from;
-  int id = board[checkerIndex] / 8;
+  Piece id = _board[checkerIndex].piece;
   blockingSquares.insert(
       checkerIndex);  // attacker can always just be taken by a piece
-  if (id == 1 || id == 3) {
+  if (id == Piece::Pawn || id == Piece::Knight) {
     // disallow all piece moves except king and taking the checker
     return;
   }
@@ -463,8 +455,8 @@ void Board::restrictMoves(
   }
 }
 
-void Board::attacks(const std::array<int, 64>& chessBoard,
-                    std::vector<moveType>& attackingMoves, int colour,
+void Board::attacks(const std::array<PieceData, 64>& chessBoard,
+                    std::vector<MoveType>& attackingMoves, int colour,
                     int index) {
   int type = chessBoard[index] - colour;
   if (type == 1) {
@@ -486,7 +478,7 @@ void Board::attacks(const std::array<int, 64>& chessBoard,
 adds a pawn's attacks to squaresBeingAttacked. Remember pawn attacks and moves
 are different.
 */
-void Board::pawnAttacks(std::vector<moveType>& attackingMoves, int colour,
+void Board::pawnAttacks(std::vector<MoveType>& attackingMoves, int colour,
                         int index) {
   int row = -8;
   if (colour) {
@@ -494,12 +486,12 @@ void Board::pawnAttacks(std::vector<moveType>& attackingMoves, int colour,
   }
   if (index % 8 != 0) {
     squaresBeingAttacked[index - 1 + row] = 1;
-    moveType pawnAttack{index, index - 1 + row, 1};
+    MoveType pawnAttack{index, index - 1 + row, MoveCategories::Regular};
     attackingMoves.push_back(pawnAttack);
   }
   if (index % 8 != 7) {
     squaresBeingAttacked[index + 1 + row] = 1;
-    moveType pawnAttack{index, index + 1 + row, 1};
+    MoveType pawnAttack{index, index + 1 + row, MoveCategories::Regular};
     attackingMoves.push_back(pawnAttack);
   }
 }
@@ -507,7 +499,7 @@ void Board::pawnAttacks(std::vector<moveType>& attackingMoves, int colour,
 /*
 adds a knight's attacks to squaresBeingAttacked.
 */
-void Board::knightAttacks(std::vector<moveType>& attackingMoves, int index) {
+void Board::knightAttacks(std::vector<MoveType>& attackingMoves, int index) {
   for (Point kd : knightDirections) {
     int row = index / 8 + kd.Y;
     int col = index % 8 + kd.X;
@@ -516,7 +508,7 @@ void Board::knightAttacks(std::vector<moveType>& attackingMoves, int index) {
         col < 8) {  // if nothing is out of bounds
       int move = row * 8 + col;
       squaresBeingAttacked[move] = 1;
-      moveType knightAttack{index, move, 1};
+      MoveType knightAttack{index, move, MoveCategories::Regular};
       attackingMoves.push_back(knightAttack);
     }
   }
@@ -527,7 +519,7 @@ adds a bishop's attacks to squaresBeingAttacked. uses sliders array for diagonal
 movement.
 */
 void Board::bishopAttacks(const std::array<int, 64>& chessBoard,
-                          std::vector<moveType>& attackingMoves, int index) {
+                          std::vector<MoveType>& attackingMoves, int index) {
   std::array directions = {1, 3, 5, 7};
   for (auto dir : directions) {
     int x = index % 8;
@@ -544,14 +536,16 @@ void Board::bishopAttacks(const std::array<int, 64>& chessBoard,
 
       if (chessBoard[i]) {
         squaresBeingAttacked[i] = 1;
-        moveType take{index, i,
-                      1};  // basically the same as sliderMoves except we mark
-                           // attacks regardless of the piece on the square
+        MoveType take{
+            index, i,
+            MoveCategories::Regular};  // basically the same as sliderMoves
+                                       // except we mark attacks regardless of
+                                       // the piece on the square
         attackingMoves.push_back(take);
         break;
       }
       squaresBeingAttacked[i] = 1;
-      moveType slide{index, i, 1};
+      MoveType slide{index, i, MoveCategories::Regular};
       attackingMoves.push_back(slide);
     }
   }
@@ -562,7 +556,7 @@ adds a rook's attacks to squaresBeingAttacked. uses sliders array for horizontal
 and vertical movement.
 */
 void Board::rookAttacks(const std::array<int, 64>& chessBoard,
-                        std::vector<moveType>& attackingMoves, int index) {
+                        std::vector<MoveType>& attackingMoves, int index) {
   std::array directions = {0, 2, 4, 6};
   for (auto dir : directions) {
     int x = index % 8;
@@ -579,14 +573,16 @@ void Board::rookAttacks(const std::array<int, 64>& chessBoard,
 
       if (chessBoard[i]) {
         squaresBeingAttacked[i] = 1;
-        moveType take{index, i,
-                      1};  // basically the same as sliderMoves except we mark
-                           // attacks regardless of the piece on the square
+        MoveType take{
+            index, i,
+            MoveCategories::Regular};  // basically the same as sliderMoves
+                                       // except we mark attacks regardless of
+                                       // the piece on the square
         attackingMoves.push_back(take);
         break;
       }
       squaresBeingAttacked[i] = 1;
-      moveType slide{index, i, 1};
+      MoveType slide{index, i, MoveCategories::Regular};
       attackingMoves.push_back(slide);
     }
   }
@@ -597,7 +593,7 @@ adds a queen's attacks to squaresBeingAttacked. uses sliders array for
 horizontal, vertical and diagonal movement.
 */
 void Board::queenAttacks(const std::array<int, 64>& chessBoard,
-                         std::vector<moveType>& attackingMoves, int index) {
+                         std::vector<MoveType>& attackingMoves, int index) {
   std::array directions = {0, 1, 2, 3, 4, 5, 6, 7};
   for (auto dir : directions) {
     int x = index % 8;
@@ -614,14 +610,16 @@ void Board::queenAttacks(const std::array<int, 64>& chessBoard,
 
       if (chessBoard[i]) {
         squaresBeingAttacked[i] = 1;
-        moveType take{index, i,
-                      1};  // basically the same as sliderMoves except we mark
-                           // attacks regardless of the piece on the square
+        MoveType take{
+            index, i,
+            MoveCategories::Regular};  // basically the same as sliderMoves
+                                       // except we mark attacks regardless of
+                                       // the piece on the square
         attackingMoves.push_back(take);
         break;
       }
       squaresBeingAttacked[i] = 1;
-      moveType slide{index, i, 1};
+      MoveType slide{index, i, MoveCategories::Regular};
       attackingMoves.push_back(slide);
     }
   }
@@ -631,7 +629,7 @@ void Board::queenAttacks(const std::array<int, 64>& chessBoard,
 king attacks are calculated differently than king moves. This is because we're
 calculating for the opponent's turn here, so we don't care if it's legal or not.
 */
-void Board::kingAttacks(std::vector<moveType>& attackingMoves, int index) {
+void Board::kingAttacks(std::vector<MoveType>& attackingMoves, int index) {
   for (auto move : sliders) {
     int row = index / 8 + move.Y;
     int col = index % 8 + move.X;
@@ -640,7 +638,7 @@ void Board::kingAttacks(std::vector<moveType>& attackingMoves, int index) {
       // if nothing is out of bounds
       int to = row * 8 + col;
       squaresBeingAttacked[to] = 1;
-      moveType kingMove{index, to, 1};
+      MoveType kingMove{index, to};
       attackingMoves.push_back(kingMove);
     }
   }
@@ -650,7 +648,7 @@ void Board::kingAttacks(std::vector<moveType>& attackingMoves, int index) {
 default constructor, initializes board to the default starting position, and
 sets all possible castling options to true.
 */
-Board::Board() : board(defaultBoard), castleRights() {
+Board::Board() : _board(defaultBoard), castleRights() {
   castleRights.fill(true);
 }
 
@@ -658,43 +656,36 @@ Board::Board() : board(defaultBoard), castleRights() {
 used when a piece is being taken by en passant. index is the index of the piece
 being taken.
 */
-void Board::takePiece(int index) { board[index] = 0; }
+void Board::takePiece(int index) { _board[index] = E; }
 
-void Board::promotePawn(int index, int newId, int prevIndex) {
-  board[prevIndex] = 0;
-  board[index] = newId;
-  lastPieceMoved = newId;
+void Board::promotePawn(int prevIndex, int newIndex, PieceData piece) {
+  _board[prevIndex] = E;
+  _board[newIndex] = piece;
+  // lastPieceMoved = piece; // Don't know what this is for
 }
 
-int Board::getPiece(int index) const { return board[index]; }
+PieceData Board::getPiece(int index) const { return _board[index]; }
 
-std::vector<moveType> Board::legalMoves(int index, int id,
-                                        std::array<int, 64> currentBoard) {
-  std::vector<moveType>
-      moves;  // vector where 0 is squares the piece cant move, 1 is legal
-              // moves, 2 is legal moves where it takes a piece, 3 is for
-              // castling, 4 for en passant, 5 for promotion squares
-  pieceData p{id / 8, id % 8, index};
+std::vector<MoveType> Board::legalMoves(
+    int index, PieceData piece, std::array<PieceData, 64> currentBoard) {
+  std::vector<MoveType> moves;
+  PieceData p{getPiece(index)};
 
-  if (p.type == 5 || p.type == 2 ||
-      p.type ==
-          4) {  // this handles the logic for the rooks, queens and bishops.
-    slidingMoves(p, moves, currentBoard);
-  }
-  if (p.type == 3) {
-    knightMoves(p, moves, currentBoard);
-  }
-  if (p.type == 1) {
-    pawnMoves(p, moves, currentBoard);
-  }
-  if (p.type == 6) {
-    kingMoves(moves);
+  if (p.piece == Piece::Queen || p.piece == Piece::Rook ||
+      p.piece == Piece::Bishop) {
+    moves = slidingMoves(p, index, currentBoard);
+  } else if (p.piece == Piece::Knight) {
+    moves = knightMoves(p, index, currentBoard);
+  } else if (p.piece == Piece::Pawn) {
+    moves = pawnMoves(p, index, currentBoard);
+  } else if (p.piece == Piece::King) {
+    moves = kingMoves(moves);
   }
 
-  isPinned(p, moves);
+  isPinned(index, p, moves);
 
   if (inCheck) {
-    if (p.type != 6) {
+    if (p.piece != Piece::King) {
       deleteNonBlockingMoves(moves);
     }
   }
@@ -711,13 +702,18 @@ void Board::resetArrays() {
   blockingSquares.clear();
 }
 
-void Board::generateAllMoves() {
-  bool turn = getTurn();
+/*
+this function generates all legal moves for the pieces of a colour (turn).
+it then adds them to the allLegalMoves set, and then checks for stalemates or
+checkmates.
+*/
 
-  for (int piece : piecesOf(turn)) {
-    pieceMoves currentPiece;
-    currentPiece.index = piece;
-    currentPiece.moves = legalMoves(piece, board[piece], board);
+// HERE
+void Board::generateAllMoves(Colour turn) {
+  for (int pieceIndex : piecesOf(turn)) {
+    PieceMoves currentPiece;
+    currentPiece.index = pieceIndex;
+    currentPiece.moves = legalMoves(pieceIndex, _board[pieceIndex], _board);
     if (!currentPiece.moves.empty()) {
       allLegalMoves.push_back(currentPiece);
     }
@@ -731,22 +727,29 @@ void Board::generateAllMoves() {
   }
 }
 
-std::vector<moveType> Board::checkMove(int index) {
-  for (const pieceMoves& piece : allLegalMoves) {
+/*
+given an index, we look for a piece's move list at that index. if we find one,
+return it.
+*/
+std::vector<MoveType> Board::checkMove(int index) {
+  for (const PieceMoves& piece : allLegalMoves) {
     if (piece.index == index) {
       return piece.moves;
     }
   }
-  pieceMoves empty;
+  PieceMoves empty;
   return {};
 }
 
-void Board::findPinsToKing(int turn) {
+// need to swap this so it checks colour that's opposite of current turn, since
+// now we pass the current player's turn, whereas we previously passed the
+// opposing player's turn
+void Board::findPinsToKing(Colour turn) {
   pins.clear();
 
   int kingIndex = -1;
   forEachSquare([&](int i) {
-    if (board[i] == 6 + turn * 8) {
+    if (_board[i].piece == Piece::King) {
       kingIndex = i;
     }
   });
@@ -758,12 +761,12 @@ void Board::findPinsToKing(int turn) {
 
     while (current >= 0 && current < 64 &&
            onSameLine(kingIndex, current, direction)) {
-      if (board[current] == 0) {
+      if (_board[current].piece == Piece::Empty) {
         current += direction;
         continue;
       }
 
-      if (board[current] / 8 == turn) {
+      if (_board[current].colour == turn) {
         // piece of same colour
         if (pinnedPiece == -1) {
           pinnedPiece = current;
@@ -773,16 +776,16 @@ void Board::findPinsToKing(int turn) {
         }
       } else {
         // enemy piece
-        int type = board[current] % 8;
+        Piece type = _board[current].piece;
         if ((direction == 1 || direction == -1 || direction == 8 ||
              direction == -8) &&
-            (type == 2 || type == 5)) {
+            (type == Piece::Rook || type == Piece::Queen)) {
           // same file (rook, queen)
           if (pinnedPiece != -1)
             newPin(pinnedPiece, kingIndex, current, direction);
         } else if ((direction == 9 || direction == -9 || direction == 7 ||
                     direction == -7) &&
-                   (type == 4 || type == 5)) {
+                   (type == Piece::Bishop || type == Piece::Queen)) {
           // same diagonal(bishop, queen)
           if (pinnedPiece != -1)
             newPin(pinnedPiece, kingIndex, current, direction);
@@ -793,14 +796,14 @@ void Board::findPinsToKing(int turn) {
   }
 }
 
-void Board::isPinned(pieceData p, std::vector<moveType>& moves) {
+void Board::isPinned(int index, PieceData p, std::vector<MoveType>& moves) {
   for (pinInfo& pin : pins) {
-    if (pin.pinIndex == p.index) {
+    if (pin.pinIndex == index) {
       auto newMoves = moves;
       moves.clear();
       // we copy moves to newMoves, then clear moves so that we can fill it with
       // only pinned moves.
-      for (moveType pieceSteps : newMoves) {
+      for (MoveType pieceSteps : newMoves) {
         if (pin.pathToKing.count(
                 pieceSteps.to)) {  // this is checking if the current move
                                    // (pieceSteps.to) of the piece we're looking
@@ -813,12 +816,13 @@ void Board::isPinned(pieceData p, std::vector<moveType>& moves) {
   }
 }
 
-int Board::canTake(int index, bool colour,
-                   const std::array<int, 64>& currentBoard) const {
+/*
+checks if piece matches the colour of the current player's turn, in which case they aren't able to take that piece
+*/
+int Board::canTake(int index, Colour colour,
+                   const std::array<PieceData, 64>& currentBoard) const {
   if (colour ==
-      currentBoard[index] /
-          8) {  // this checks if the two pieces are the same colour, if so then
-                // it's simply an invalid move, otherwise it can be taken
+      currentBoard[index].colour) {
     return 0;
   }
   return 2;
@@ -827,10 +831,10 @@ int Board::canTake(int index, bool colour,
 void Board::setEnPassantFile(int column) { enPassantFile = column; }
 
 void Board::updateBoard(int prevIndex, int newIndex) {
-  int temp = board[prevIndex];
-  board[prevIndex] = 0;
-  board[newIndex] = temp;
-  lastPieceMoved = board[newIndex];
+  PieceData temp = _board[prevIndex];
+  _board[prevIndex] = E;
+  _board[newIndex] = temp;
+  lastPieceMoved = _board[newIndex];
 }
 
 void Board::canCastle() {
@@ -858,14 +862,14 @@ void Board::findCheckingMoves() {
   int oppositeColour = turn * 8;
   bool multipleAttackers = false;
 
-  std::vector<moveType> attackingMoves;
+  std::vector<MoveType> attackingMoves;
   attackingMoves.reserve(64);
 
-  findAttackedSquares(board, attackingMoves, colour, oppositeColour);
+  findAttackedSquares(_board, attackingMoves, colour, oppositeColour);
 
   inCheck = isInCheck();  // pass moveType of attacker, and multipleAttackers
   if (inCheck) {
-    std::optional<moveType> checkingMove;
+    std::optional<MoveType> checkingMove;
     findAttackersOnKing(attackingMoves, multipleAttackers, checkingMove);
     if (multipleAttackers) {
       onlyKingToMove = true;
@@ -878,7 +882,7 @@ void Board::findCheckingMoves() {
 void Board::findKing() {
   bool turn = getTurn();
   forEachSquare([&](int i) {
-    if (board[i] == 6 + !turn * 8) {
+    if (_board[i] == 6 + !turn * 8) {
       king.index = i;
       king.isBlack = !turn;
       king.type = 6;
@@ -890,7 +894,7 @@ void Board::findKing() {
 When given a vector of moves, deletes all moves that aren't currently blocking a
 check. Should only be called when king is in check.
 */
-void Board::deleteNonBlockingMoves(std::vector<moveType>& moves) {
+void Board::deleteNonBlockingMoves(std::vector<MoveType>& moves) {
   auto tempMoves = moves;
   moves.clear();
   for (const auto& move : tempMoves) {
@@ -902,7 +906,7 @@ void Board::deleteNonBlockingMoves(std::vector<moveType>& moves) {
 
 void Board::printBoard() {
   forEachSquare([&](int i) {
-    std::cout << board[i] << " ";
+    std::cout << _board[i] << " ";
     if ((i + 1) % 8 == 0) {
       std::cout << std::endl;
     }

@@ -75,7 +75,7 @@ sf::Sprite* Game::findPiece(sf::Event& event) {
   pieceId = board.getPiece(prevIndex);
   if (pieceId / 8 == turn) {
     validMoves = board.checkMove(prevIndex);
-    for (int i = 1; i < sprite.size(); ++i) {
+    for (ulong i = 1; i < sprite.size(); ++i) {
       if (sprite[i].getGlobalBounds().contains(mousePos)) {
         offset = mousePos - sprite[i].getPosition();
         isDragging = true;
@@ -218,7 +218,7 @@ void Game::castling(int row, int col) {
     board.updateBoard(row * 8 + 7, row * 8 + 5);
     float xcoord = 7 * 100.f;
     float ycoord = row * 100.f;
-    for (int i = 1; i < sprite.size(); ++i) {
+    for (ulong i = 1; i < sprite.size(); ++i) {
       if (sprite[i].getGlobalBounds().contains(xcoord, ycoord)) {
         sprite[i].setPosition(5 * 100.f, ycoord);
         break;
@@ -228,7 +228,7 @@ void Game::castling(int row, int col) {
     board.updateBoard(row * 8 + 0, row * 8 + 3);
     float xcoord = 0 * 100.f;
     float ycoord = row * 100.f;
-    for (int i = 1; i < sprite.size(); ++i) {
+    for (ulong i = 1; i < sprite.size(); ++i) {
       if (sprite[i].getGlobalBounds().contains(xcoord, ycoord)) {
         sprite[i].setPosition(3 * 100.f, ycoord);
         break;
@@ -242,7 +242,7 @@ void Game::takingEnPassant(int row, int col) {
   if(pieceId / 8){
     ROW_BEHIND_PIECE = -1;
   }
-  for (int i = 1; i < sprite.size(); ++i) {
+  for (ulong i = 1; i < sprite.size(); ++i) {
     if (sprite[i].getGlobalBounds().contains(
             col * 100.f, (row + ROW_BEHIND_PIECE) * 100.f) &&
         (&sprite[i] != draggedPiece)) {
@@ -254,7 +254,7 @@ void Game::takingEnPassant(int row, int col) {
 
 void Game::takePiece(int row, int col) {  // just needs to delete sprite at
                                           // index before new one gets placed
-  for (int i = 1; i < sprite.size(); ++i) {
+  for (ulong i = 1; i < sprite.size(); ++i) {
     if (sprite[i].getGlobalBounds().contains(col * 100.f, row * 100.f) &&
         (&sprite[i] != draggedPiece)) {
       sprite[i].setPosition(1000, 1000);
@@ -262,7 +262,7 @@ void Game::takePiece(int row, int col) {  // just needs to delete sprite at
   }
 }
 
-void Game::lightValidSquares(std::vector<moveType>& moves) {
+void Game::lightValidSquares(std::vector<MoveType>& moves) {
   for (auto move : moves) {
     float x = move.to % 8 * 100.f;
     float y = move.to / 8 * 100.f;
@@ -300,7 +300,7 @@ void Game::loadSprites() {
                                       "promochoicesblack.png"};
   // array of the images i use as sprites
   int j = 0;
-  for (int i = 0; i < texture.size();
+  for (ulong i = 0; i < texture.size();
        ++i) {  // loop that makes 1 texture of each file, and sprites equal to
                // the amount of pieces we need on the starting chessboard.
     std::string path = "images/" + file[i];
@@ -334,18 +334,22 @@ void Game::nextTurn() {
   board.resetArrays();
   board.canCastle();
 
-  turn = !turn;
+  if(_turn == Colour::White){
+    _turn = Colour::Black;
+  }else{
+    _turn = Colour::White;
+  }
   board.findKing();
   board.findCheckingMoves();
-  board.findPinsToKing(!turn);
-  board.generateAllMoves();
+  board.findPinsToKing(_turn);
+  board.generateAllMoves(_turn);
 }
 
 void Game::summonStartingSprites() {
   float scale = 100.0 / 333;
   int coordMult = 100;
   sprite[0].setScale(1 / 2.4, 1 / 2.4);
-  for (int i = 1; i < sprite.size(); ++i) {
+  for (ulong i = 1; i < sprite.size(); ++i) {
     sprite[i].setScale(scale,
                        scale);  // loop that sets all sprites to proper scale
   }
