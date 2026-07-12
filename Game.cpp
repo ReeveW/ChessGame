@@ -53,8 +53,6 @@ void Game::handleMouseClick(sf::Event& event) {
   pieceId = board.getPiece(prevIndex);
   if (pieceId / 8 == turn) {
     validMoves = board.checkMove(prevIndex);
-    // idea: make struct for draggedPiece, and turn this into a seperate
-    // function
     for (int i = 1; i < sprite.size(); ++i) {
       if (sprite[i].getGlobalBounds().contains(mousePos)) {
         draggedPiece = &sprite[i];
