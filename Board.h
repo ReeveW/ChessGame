@@ -64,6 +64,7 @@ private:
 
 
     // other private functions:
+    void kingLegalMoves();
     void slidingMoves(pieceData p, std::vector<moveType>& moves, const std::array<int, 64>& currentBoard);
     void knightMoves(pieceData p, std::vector<moveType>& moves, const std::array<int, 64>& currentBoard);
     void pawnMoves(pieceData p, std::vector<moveType>& moves, const std::array<int, 64>& currentBoard);
