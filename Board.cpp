@@ -604,7 +604,7 @@ void Board::promotePawn(int index, int newId, int prevIndex) {
 int Board::getPiece(int index) const { return board[index]; }
 
 std::vector<moveType> Board::legalMoves(int index, int id,
-                                        std::array<int, 64> currentBoard) {
+                                        const std::array<int, 64>& currentBoard) {
   std::vector<moveType> moves;
   pieceData p{};
   p.isBlack = id / 8;

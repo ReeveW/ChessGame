@@ -118,7 +118,7 @@ class Board {
   void promotePawn(int index, int newId, int prevIndex);
   int getPiece(int index) const;
   std::vector<moveType> legalMoves(int index, int id,
-                                   std::array<int, 64> currentBoard);
+                                   const std::array<int, 64>& currentBoard);
   void generateAllMoves();
   std::vector<moveType> checkMove(int index);
   void findPinsToKing(int turn);
