@@ -1,11 +1,12 @@
 #include "Game.h"
-#include "Board.h"
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Window/Event.hpp>
 #include <array>
 #include <iostream>
 #include <string>
+
+#include "Board.h"
 
 Game::Game() : window(sf::VideoMode(800, 800), "Chess Game") {
   window.setFramerateLimit(120);
@@ -31,13 +32,13 @@ void Game::run() {
 
     window.clear();
     for (auto& s : sprite) {
-      if(draggedPiece && &s == draggedPiece){
+      if (draggedPiece && &s == draggedPiece) {
         continue;
       }
       window.draw(s);
     }
     lightValidSquares(validMoves);
-    if(draggedPiece){
+    if (draggedPiece) {
       window.draw(*draggedPiece);
     }
     window.display();

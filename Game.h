@@ -38,7 +38,8 @@ class Game {
   void summonStartingSprites();
   void movePiece();
   void undoPromotion(int row, int col);
-  void takeNonPromotingPiece(int row, int col, sf::Sprite* promotingPieceSprite);
+  void takeNonPromotingPiece(int row, int col,
+                             sf::Sprite* promotingPieceSprite);
   void choosePromotionPiece(sf::Event& event);
   void checkPawnMove(int prevIndex, int newIndex);
   void handleDragAndDrop(sf::Event& Event);
